@@ -3,6 +3,7 @@ package hardwar.branch.prediction.judged.GAs;
 
 import hardwar.branch.prediction.shared.*;
 import hardwar.branch.prediction.shared.devices.*;
+import sun.security.util.ArrayUtil;
 
 import java.util.Arrays;
 
@@ -29,19 +30,19 @@ public class GAs implements BranchPredictor {
      */
     public GAs(int BHRSize, int SCSize, int branchInstructionSize, int KSize, HashMode hashmode) {
         // TODO: complete the constructor
-        this.branchInstructionSize = 0;
-        this.KSize = 0;
+        this.branchInstructionSize = branchInstructionSize;
+        this.KSize = KSize;
         this.hashMode = HashMode.XOR;
 
         // Initialize the BHR register with the given size and no default value
-        BHR = null;
+        BHR = new SIPORegister("BHR", BHRSize, null);
 
         // Initializing the PAPHT with K bit as PHT selector and 2^BHRSize row as each PHT entries
         // number and SCSize as block size
-        PSPHT = null;
+        PSPHT = new PerAddressPredictionHistoryTable(KSize, 1 << BHRSize, SCSize);
 
         // Initialize the saturating counter
-        SC = null;
+        SC = new SIPORegister("SC", SCSize, null);
     }
 
     /**
@@ -53,7 +54,13 @@ public class GAs implements BranchPredictor {
      */
     @Override
     public BranchResult predict(BranchInstruction branchInstruction) {
-        // TODO: complete Task 1
+        PSPHT.putIfAbsent(getCacheEntry(branchInstruction.getInstructionAddress()), getDefaultBlock());
+
+
+        // TODO : complete Task 1
+        SC.load(PSPHT.get(getCacheEntry(branchInstruction.getInstructionAddress())));
+        if (SC.read()[0] == Bit.ONE)
+            return BranchResult.TAKEN;
         return BranchResult.NOT_TAKEN;
     }
 
@@ -65,7 +72,19 @@ public class GAs implements BranchPredictor {
      */
     @Override
     public void update(BranchInstruction branchInstruction, BranchResult actual) {
-        // TODO: complete Task 2
+        if (actual == BranchResult.TAKEN) {
+            SC.load(CombinationalLogic.count(SC.read(), true, CountMode.SATURATING));
+        } else {
+            SC.load(CombinationalLogic.count(SC.read(), false, CountMode.SATURATING));
+        }
+        PSPHT.put(getCacheEntry(branchInstruction.getInstructionAddress()), SC.read());
+
+        if (actual == BranchResult.TAKEN) {
+            BHR.insert(Bit.ONE);
+        } else {
+            BHR.insert(Bit.ZERO);
+        }
+
     }
 
     /**

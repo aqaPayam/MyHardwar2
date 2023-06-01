@@ -1,4 +1,4 @@
-Thu Jun  1 13:21:16 UTC 2023
+Thu Jun  1 13:23:13 UTC 2023
 GAg: 
 Test passed, 1000 out of 1000 assertions passed
 
@@ -36,8 +36,8 @@ Exception in thread "main" java.lang.NullPointerException
 	at hardwar.branch.prediction.judge.PredictorSimulator.simulate(PredictorSimulator.java:30)
 	at hardwar.branch.prediction.judge.Judge.main(Judge.java:32)
 PAs: 
-Exception in thread "main" hardwar.branch.prediction.judge.TestFailedException: Test failed, 262 out of 1000 assertions passed
-	at hardwar.branch.prediction.judge.Judge.main(Judge.java:39)
+Test passed, 1000 out of 1000 assertions passed
+
 SAg: 
 Test passed, 1000 out of 1000 assertions passed
 

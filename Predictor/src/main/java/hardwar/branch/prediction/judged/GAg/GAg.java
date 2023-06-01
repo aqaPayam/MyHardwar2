@@ -32,7 +32,11 @@ public class GAg implements BranchPredictor {
     
 
         // Initialize the PHT with a size of 2^size and each entry having a saturating counter of size "SCSize"
-        PHT = new PageHistoryTable(2 << BHRSize, SCSize);
+        int PHT_col = 1 << BHRSize ;
+        PHT = new PageHistoryTable(PHT_col, SCSize);
+
+            
+        
 
         // Initialize the SC register
         defaultBlock = new Bit[SCSize];
@@ -48,6 +52,7 @@ public class GAg implements BranchPredictor {
      */
     @Override
     public BranchResult predict(BranchInstruction branchInstruction) {
+        PHT.putIfAbsent(BHR.read(), getDefaultBlock());
         // TODO : complete Task 1
         SC.load(PHT.get(BHR.read()));
         if (SC.read()[0] == Bit.ONE)

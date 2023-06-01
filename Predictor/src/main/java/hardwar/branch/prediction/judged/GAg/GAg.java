@@ -21,15 +21,23 @@ public class GAg implements BranchPredictor {
      * @param SCSize  the size of the register which hold the saturating counter value and the cache block size
      */
     public GAg(int BHRSize, int SCSize) {
+
+        Bit[] defaultBlock = new Bit[BHRSize];
+        Arrays.fill(defaultBlock, Bit.ZERO);
+        this.BHR = new SIPORegister("BHR",BHRSize,defaultBlock) ;
+        //
+
         // TODO : complete the constructor
         // Initialize the BHR register with the given size and no default value
-        this.BHR = null;
+    
 
         // Initialize the PHT with a size of 2^size and each entry having a saturating counter of size "SCSize"
-        PHT = null;
+        PHT = new PageHistoryTable(2 << BHRSize, SCSize);
 
         // Initialize the SC register
-        SC = null;
+        defaultBlock = new Bit[SCSize];
+        Arrays.fill(defaultBlock, Bit.ZERO);
+        SC = new SIPORegister("SC", SCSize,defaultBlock );
     }
 
     /**
@@ -41,6 +49,9 @@ public class GAg implements BranchPredictor {
     @Override
     public BranchResult predict(BranchInstruction branchInstruction) {
         // TODO : complete Task 1
+        SC.load(PHT.get(BHR.read()));
+        if (SC.read()[0] == Bit.ONE)
+            return BranchResult.TAKEN;
         return BranchResult.NOT_TAKEN;
     }
 
@@ -52,6 +63,24 @@ public class GAg implements BranchPredictor {
      */
     @Override
     public void update(BranchInstruction instruction, BranchResult actual) {
+        // akahrin chizi ke predict shode ro update nishe kard faghat 
+        //TODO OOOOOOOOOOOOOOOOOOOOO
+
+        if(actual== BranchResult.TAKEN){
+            SC.load(CombinationalLogic.count(SC.read(), true, CountMode.SATURATING));
+        }
+        else{
+            SC.load(CombinationalLogic.count(SC.read(), false, CountMode.SATURATING));
+        }
+        PHT.put(BHR.read(), SC.read());
+
+        if(actual== BranchResult.TAKEN){
+            BHR.insert(Bit.ONE);
+        }
+        else{
+            BHR.insert(Bit.ZERO);
+        }
+        
         // TODO: complete Task 2
     }
 
@@ -68,5 +97,9 @@ public class GAg implements BranchPredictor {
     @Override
     public String monitor() {
         return "GAg predictor snapshot: \n" + BHR.monitor() + SC.monitor() + PHT.monitor();
+    }
+
+    public static void main(String[] args) {
+        
     }
 }

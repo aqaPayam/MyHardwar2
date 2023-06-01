@@ -23,17 +23,17 @@ public class PAp implements BranchPredictor {
     public PAp(int BHRSize, int SCSize, int branchInstructionSize) {
         this.branchInstructionSize = branchInstructionSize;
 
-        PABHR = new RegisterBank(branchInstructionSize, BHRSize);
+        this.PABHR = new RegisterBank(branchInstructionSize, BHRSize);
 
 
         Bit[] defaultBlock = new Bit[SCSize];
         Arrays.fill(defaultBlock, Bit.ZERO);
-        SC = new SIPORegister("SC", SCSize,null );
+        this.SC = new SIPORegister("SC", SCSize,null );
 
         // Initialize the PHT with a size of 2^size and each entry having a saturating counter of size "SCSize"
         int PHT_col =(1 << BHRSize);
 
-        PAPHT = new PerAddressPredictionHistoryTable(this.branchInstructionSize,PHT_col,SCSize);
+        this.PAPHT = new PerAddressPredictionHistoryTable(this.branchInstructionSize,PHT_col,SCSize);
     
     }
 

@@ -41,7 +41,7 @@ public class PAp implements BranchPredictor {
     public BranchResult predict(BranchInstruction branchInstruction) {
         PAPHT.putIfAbsent(getCacheEntry(branchInstruction.getInstructionAddress(), PABHR.read(branchInstruction.getInstructionAddress()).read()), getDefaultBlock());
 
-        SC.load(PAPHT.get(PABHR.read(branchInstruction.getInstructionAddress()).read()));
+        SC.load( PAPHT.get(getCacheEntry(branchInstruction.getInstructionAddress(), PABHR.read(branchInstruction.getInstructionAddress()).read() )));
         if (SC.read()[0] == Bit.ONE)
             return BranchResult.TAKEN;
         return BranchResult.NOT_TAKEN;

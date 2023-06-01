@@ -24,18 +24,20 @@ public class GAp implements BranchPredictor {
      * @param branchInstructionSize the number of bits which is used for saving a branch instruction
      */
     public GAp(int BHRSize, int SCSize, int branchInstructionSize) {
-        // TODO: complete the constructor
-        this.branchInstructionSize = 0;
+        this.branchInstructionSize = branchInstructionSize;
 
-        // Initialize the BHR register with the given size and no default value
-        this.BHR = null;
+        Bit[] defaultBlock = new Bit[BHRSize];
+        Arrays.fill(defaultBlock, Bit.ZERO);
+        this.BHR = new SIPORegister("BHR",BHRSize,null) ;
 
-        // Initializing the PAPHT with BranchInstructionSize as PHT Selector and 2^BHRSize row as each PHT entries
-        // number and SCSize as block size
-        PAPHT = null;
+        defaultBlock = new Bit[SCSize];
+        Arrays.fill(defaultBlock, Bit.ZERO);
+        SC = new SIPORegister("SC", SCSize,null );
 
-        // Initialize the SC register
-        SC = null;
+        // Initialize the PHT with a size of 2^size and each entry having a saturating counter of size "SCSize"
+        int PHT_col =(1 << BHRSize);
+
+        PAPHT = new PerAddressPredictionHistoryTable(this.branchInstructionSize,PHT_col,SCSize);
     }
 
     /**
@@ -46,7 +48,11 @@ public class GAp implements BranchPredictor {
      */
     @Override
     public BranchResult predict(BranchInstruction branchInstruction) {
-        // TODO: complete Task 1
+        PAPHT.putIfAbsent(getCacheEntry(branchInstruction.getInstructionAddress()), getDefaultBlock());
+
+        SC.load(PAPHT.get(getCacheEntry(branchInstruction.getInstructionAddress())));
+        if (SC.read()[0] == Bit.ONE)
+            return BranchResult.TAKEN;
         return BranchResult.NOT_TAKEN;
     }
 
@@ -58,7 +64,20 @@ public class GAp implements BranchPredictor {
      */
     @Override
     public void update(BranchInstruction branchInstruction, BranchResult actual) {
-        // TODO : complete Task 2
+        if(actual== BranchResult.TAKEN){
+            SC.load(CombinationalLogic.count(SC.read(), true, CountMode.SATURATING));
+        }
+        else{
+            SC.load(CombinationalLogic.count(SC.read(), false, CountMode.SATURATING));
+        }
+        PAPHT.put(getCacheEntry(branchInstruction.getInstructionAddress()), SC.read());
+
+        if(actual== BranchResult.TAKEN){
+            BHR.insert(Bit.ONE);
+        }
+        else{
+            BHR.insert(Bit.ZERO);
+        }
     }
 
 

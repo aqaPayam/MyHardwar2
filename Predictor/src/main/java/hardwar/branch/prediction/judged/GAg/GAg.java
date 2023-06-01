@@ -24,7 +24,7 @@ public class GAg implements BranchPredictor {
 
         Bit[] defaultBlock = new Bit[BHRSize];
         Arrays.fill(defaultBlock, Bit.ZERO);
-        this.BHR = new SIPORegister("BHR",BHRSize,defaultBlock) ;
+        this.BHR = new SIPORegister("BHR",BHRSize,null) ;
         //
 
         // TODO : complete the constructor
@@ -37,7 +37,7 @@ public class GAg implements BranchPredictor {
         // Initialize the SC register
         defaultBlock = new Bit[SCSize];
         Arrays.fill(defaultBlock, Bit.ZERO);
-        SC = new SIPORegister("SC", SCSize,defaultBlock );
+        SC = new SIPORegister("SC", SCSize,null );
     }
 
     /**

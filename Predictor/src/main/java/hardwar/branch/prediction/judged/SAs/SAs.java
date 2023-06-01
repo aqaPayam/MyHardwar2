@@ -19,31 +19,57 @@ public class SAs implements BranchPredictor {
     }
 
     public SAs(int BHRSize, int SCSize, int branchInstructionSize, int KSize, HashMode hashMode) {
-        // TODO: complete the constructor
-        this.branchInstructionSize = 0;
-        this.KSize = 0;
+
+        this.branchInstructionSize = branchInstructionSize;
+        
+        this.KSize = KSize;
+
+        this.PSBHR = new RegisterBank(KSize, BHRSize);
+
+
+        Bit[] defaultBlock = new Bit[SCSize];
+        Arrays.fill(defaultBlock, Bit.ZERO);
+        this.SC = new SIPORegister("SC", SCSize,null );
+
+        // Initialize the PHT with a size of 2^size and each entry having a saturating counter of size "SCSize"
+        int PHT_col =(1 << BHRSize);
+
+        this.PSPHT = new PerAddressPredictionHistoryTable(KSize,PHT_col,SCSize);
+        
         this.hashMode = HashMode.XOR;
 
-        // Initialize the PSBHR with the given bhr and branch instruction size
-        PSBHR = null;
-
-        // Initializing the PAPHT with BranchInstructionSize as PHT Selector and 2^BHRSize row as each PHT entries
-        // number and SCSize as block size
-        PSPHT = null;
-
-        // Initialize the SC register
-        SC = null;
     }
 
     @Override
     public BranchResult predict(BranchInstruction branchInstruction) {
-        // TODO: complete Task 1
+        PSPHT.putIfAbsent(getCacheEntry(branchInstruction.getInstructionAddress(), PSBHR.read(getAddressLine(branchInstruction.getInstructionAddress())).read()), getDefaultBlock());
+
+        SC.load( PSPHT.get(getCacheEntry(branchInstruction.getInstructionAddress(), PSBHR.read(getAddressLine(branchInstruction.getInstructionAddress())).read() )));
+        if (SC.read()[0] == Bit.ONE)
+            return BranchResult.TAKEN;
         return BranchResult.NOT_TAKEN;
     }
 
     @Override
     public void update(BranchInstruction branchInstruction, BranchResult actual) {
-        // TODO: complete Task 2
+        if(actual== BranchResult.TAKEN){
+            SC.load(CombinationalLogic.count(SC.read(), true, CountMode.SATURATING));
+        }
+        else{
+            SC.load(CombinationalLogic.count(SC.read(), false, CountMode.SATURATING));
+        }
+        PSPHT.put(getCacheEntry(branchInstruction.getInstructionAddress(), PSBHR.read(getAddressLine(branchInstruction.getInstructionAddress())).read()), SC.read());
+    
+        if(actual== BranchResult.TAKEN){
+            ShiftRegister bits =  PSBHR.read(getAddressLine(branchInstruction.getInstructionAddress()));
+            bits.insert(Bit.ONE);
+            PSBHR.write(getAddressLine(branchInstruction.getInstructionAddress()),bits.read());
+        }
+        else{
+            ShiftRegister bits =  PSBHR.read(getAddressLine(branchInstruction.getInstructionAddress()));
+            bits.insert(Bit.ZERO);
+            PSBHR.write(getAddressLine(branchInstruction.getInstructionAddress()),bits.read());
+        }
     }
 
 

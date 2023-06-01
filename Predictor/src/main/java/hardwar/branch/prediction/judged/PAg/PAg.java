@@ -65,10 +65,14 @@ public class PAg implements BranchPredictor {
         PHT.put(PABHR.read(instruction.getInstructionAddress()).read(), SC.read());
 
         if(actual== BranchResult.TAKEN){
-            PABHR.read(instruction.getInstructionAddress()).insert(Bit.ONE);
+            ShiftRegister bits =  PABHR.read(instruction.getInstructionAddress());
+            bits.insert(Bit.ONE);
+            PABHR.write(instruction.getInstructionAddress(),bits.read());
         }
         else{
-            PABHR.read(instruction.getInstructionAddress()).insert(Bit.ZERO);
+            ShiftRegister bits =  PABHR.read(instruction.getInstructionAddress());
+            bits.insert(Bit.ZERO);
+            PABHR.write(instruction.getInstructionAddress(),bits.read());
         }
         
     }

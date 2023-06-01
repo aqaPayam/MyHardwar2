@@ -42,9 +42,9 @@ public class SAs implements BranchPredictor {
 
     @Override
     public BranchResult predict(BranchInstruction branchInstruction) {
-        PSPHT.putIfAbsent(getCacheEntry(branchInstruction.getInstructionAddress(), PSBHR.read(getAddressLine(branchInstruction.getInstructionAddress())).read()), getDefaultBlock());
+        PSPHT.putIfAbsent(getCacheEntry(getAddressLine(branchInstruction.getInstructionAddress()), PSBHR.read(getAddressLine(branchInstruction.getInstructionAddress())).read()), getDefaultBlock());
 
-        SC.load( PSPHT.get(getCacheEntry(branchInstruction.getInstructionAddress(), PSBHR.read(getAddressLine(branchInstruction.getInstructionAddress())).read() )));
+        SC.load( PSPHT.get(getCacheEntry(getAddressLine(branchInstruction.getInstructionAddress()), PSBHR.read(getAddressLine(branchInstruction.getInstructionAddress())).read() )));
         if (SC.read()[0] == Bit.ONE)
             return BranchResult.TAKEN;
         return BranchResult.NOT_TAKEN;
@@ -58,7 +58,7 @@ public class SAs implements BranchPredictor {
         else{
             SC.load(CombinationalLogic.count(SC.read(), false, CountMode.SATURATING));
         }
-        PSPHT.put(getCacheEntry(branchInstruction.getInstructionAddress(), PSBHR.read(getAddressLine(branchInstruction.getInstructionAddress())).read()), SC.read());
+        PSPHT.put(getCacheEntry(getAddressLine(branchInstruction.getInstructionAddress()), PSBHR.read(getAddressLine(branchInstruction.getInstructionAddress())).read()), SC.read());
     
         if(actual== BranchResult.TAKEN){
             ShiftRegister bits =  PSBHR.read(getAddressLine(branchInstruction.getInstructionAddress()));

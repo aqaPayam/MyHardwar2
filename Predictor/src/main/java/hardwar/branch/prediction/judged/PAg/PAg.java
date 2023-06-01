@@ -23,15 +23,17 @@ public class PAg implements BranchPredictor {
      * @param branchInstructionSize the number of bits which is used for saving a branch instruction
      */
     public PAg(int BHRSize, int SCSize, int branchInstructionSize) {
+
         // TODO: complete the constructor
         // Initialize the PABHR with the given bhr and branch instruction size
-        PABHR = null;
+        PABHR = new RegisterBank(branchInstructionSize, BHRSize);
 
-        // Initialize the PHT with a size of 2^size and each entry having a saturating counter of size "SCSize"
-        PHT = null;
+        int PHT_col = 1 << BHRSize ;
+        PHT = new PageHistoryTable(PHT_col, SCSize);
 
-        // Initialize the SC register
-        SC = null;
+        Bit[] defaultBlock = new Bit[SCSize];
+        Arrays.fill(defaultBlock, Bit.ZERO);
+        SC = new SIPORegister("SC", SCSize,null );
     }
 
     /**
@@ -40,7 +42,11 @@ public class PAg implements BranchPredictor {
      */
     @Override
     public BranchResult predict(BranchInstruction instruction) {
-        // TODO: complete Task 1
+        PHT.putIfAbsent( PABHR.read(instruction.getInstructionAddress()).read() , getDefaultBlock());
+        // TODO : complete Task 1
+        SC.load(PHT.get(PABHR.read(instruction.getInstructionAddress()).read()));
+        if (SC.read()[0] == Bit.ONE)
+            return BranchResult.TAKEN;
         return BranchResult.NOT_TAKEN;
     }
 
@@ -50,7 +56,21 @@ public class PAg implements BranchPredictor {
      */
     @Override
     public void update(BranchInstruction instruction, BranchResult actual) {
-        // TODO: complete Task 2
+        if(actual== BranchResult.TAKEN){
+            SC.load(CombinationalLogic.count(SC.read(), true, CountMode.SATURATING));
+        }
+        else{
+            SC.load(CombinationalLogic.count(SC.read(), false, CountMode.SATURATING));
+        }
+        PHT.put(PABHR.read(instruction.getInstructionAddress()).read(), SC.read());
+
+        if(actual== BranchResult.TAKEN){
+            PABHR.read(instruction.getInstructionAddress()).insert(Bit.ONE);
+        }
+        else{
+            PABHR.read(instruction.getInstructionAddress()).insert(Bit.ZERO);
+        }
+        
     }
 
     /**
